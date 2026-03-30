@@ -1,0 +1,8 @@
+# 安装我们的相关的包
+
+```bash
+# 建议使用虚拟环境
+python -m venv Test
+./Test/Scripts/activate
+pip install sounddevice soundfile   
+```
