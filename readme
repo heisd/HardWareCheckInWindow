@@ -1,25 +1,83 @@
-# HardWareCheckInWindow
+# Windows 音频设备与录音检查
 
-Windows 音频设备枚举与录音回放的小工具。
+两个基于 Python 的小脚本，用于列出本机音频设备，并对指定输入设备进行短时录音、保存与回放。适合在调试 USB 麦克风、声卡或语音采集前先验证设备是否可被访问。
 
-## 内容导航
+## 脚本职责
 
-- [FindDevice.py](./FindDevice.py)：打印 sounddevice 可见的设备列表
-- [VoiceQuality.py](./VoiceQuality.py)：录制 5 秒单声道音频，保存 test.wav 并回放
+| 文件 | 行为 |
+| --- | --- |
+| [FindDevice.py](./FindDevice.py) | 调用 `sounddevice.query_devices()` 打印设备列表 |
+| [VoiceQuality.py](./VoiceQuality.py) | 从指定设备录音 5 秒，写入 `test.wav`，再播放录音 |
 
-## 安装与使用
+程序没有图形界面，设备选择通过修改脚本完成。
+
+## 环境与安装
+
+需要 Python 3、可用的输入设备，以及已开启的系统麦克风访问权限。示例使用 PowerShell：
 
 ```powershell
+git clone --branch lqy https://github.com/heisd/HardWareCheckInWindow.git
+cd HardWareCheckInWindow
 python -m venv Test
 .\Test\Scripts\Activate.ps1
 python -m pip install sounddevice soundfile numpy
+```
+
+若无法激活虚拟环境，也可以直接使用其解释器：
+
+```powershell
+.\Test\Scripts\python.exe FindDevice.py
+```
+
+后续安装与运行应使用同一个 Python 环境。
+
+## 操作步骤
+
+### 1. 列出设备
+
+```powershell
 python FindDevice.py
 ```
 
-从设备列表中找到输入设备编号，修改 `VoiceQuality.py` 的 `device_id`（当前硬编码为 39），再运行：
+在输出中找到目标设备，关注它是否提供输入通道。设备编号是当前系统枚举结果，不同电脑以及插拔设备后可能不同。
+
+### 2. 修改录音配置
+
+打开 `VoiceQuality.py`，核对：
+
+| 变量 | 当前值 | 含义 |
+| --- | --- | --- |
+| `device_id` | `39` | 输入设备编号，必须替换成本机实际值 |
+| `duration` | `5` | 录音时长，秒 |
+| `sample_rate` | `16000` | 采样率，Hz |
+| `channels` | `1` | 单声道 |
+| `dtype` | `int16` | 录音采样类型 |
+
+设备需要支持所选采样率和通道数。更换设备后，应重新运行设备枚举，而不是继续沿用 39。
+
+### 3. 录音并回放
 
 ```powershell
 python VoiceQuality.py
 ```
 
-脚本以 16000 Hz 录音，输出 `test.wav` 到当前目录。请确认设备支持该采样率并已允许麦克风访问。
+看到“开始录音”提示后说话，约 5 秒后脚本保存文件，再通过默认输出设备回放。录音输入使用指定的 `device_id`，回放调用没有显式指定输出设备。
+
+## 输出与复测
+
+输出文件为当前工作目录的 `test.wav`。重复执行会写入同名文件；需要比较多个设备时，先将前一次结果改名保存。
+
+这只能完成基本的采集与听感检查，不会计算信噪比、频率响应或正式的音频质量评分。
+
+## 常见问题
+
+| 现象 | 优先检查 |
+| --- | --- |
+| 无效设备或设备无法打开 | 重新枚举，确认设备提供输入通道 |
+| 不支持采样率/通道 | 调整 `sample_rate`、`channels`，与设备能力一致 |
+| 录音没有声音 | 检查系统权限、输入音量、静音状态以及设备编号 |
+| 有文件但听不到回放 | 检查默认扬声器/耳机输出；输入设备编号不控制回放设备 |
+| 找不到 test.wav | 检查运行终端的当前目录 |
+| ModuleNotFoundError | 使用当前解释器执行 `python -m pip install ...` |
+
+建议先用短录音确认链路，再将设备接入上层语音应用。
