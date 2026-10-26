@@ -1,8 +1,25 @@
-# 安装我们的相关的包
+# HardWareCheckInWindow
 
-```bash
-# 建议使用虚拟环境
+Windows 音频设备枚举与录音回放的小工具。
+
+## 内容导航
+
+- [FindDevice.py](./FindDevice.py)：打印 sounddevice 可见的设备列表
+- [VoiceQuality.py](./VoiceQuality.py)：录制 5 秒单声道音频，保存 test.wav 并回放
+
+## 安装与使用
+
+```powershell
 python -m venv Test
-./Test/Scripts/activate
-pip install sounddevice soundfile   
+.\Test\Scripts\Activate.ps1
+python -m pip install sounddevice soundfile numpy
+python FindDevice.py
 ```
+
+从设备列表中找到输入设备编号，修改 `VoiceQuality.py` 的 `device_id`（当前硬编码为 39），再运行：
+
+```powershell
+python VoiceQuality.py
+```
+
+脚本以 16000 Hz 录音，输出 `test.wav` 到当前目录。请确认设备支持该采样率并已允许麦克风访问。
